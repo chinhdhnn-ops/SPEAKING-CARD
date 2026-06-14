@@ -1,0 +1,1840 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Speaking Cards Classroom</title>
+  <style>
+    :root {
+      --primary: #6547d9;
+      --primary-dark: #4b31b8;
+      --secondary: #ffb703;
+      --success: #2a9d8f;
+      --danger: #e63946;
+      --ink: #1f2937;
+      --muted: #64748b;
+      --paper: rgba(255,255,255,.94);
+      --line: #e2e8f0;
+      --shadow: 0 18px 55px rgba(38, 31, 81, .18);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 15%, rgba(255,255,255,.55), transparent 26%),
+        radial-gradient(circle at 85% 12%, rgba(255,255,255,.38), transparent 23%),
+        linear-gradient(135deg, #8b5cf6 0%, #4f46e5 50%, #0ea5e9 100%);
+    }
+
+    button, input, textarea, select { font: inherit; }
+
+    button {
+      border: 0;
+      cursor: pointer;
+      transition: transform .16s ease, filter .16s ease, opacity .16s ease;
+    }
+
+    button:hover { transform: translateY(-1px); filter: brightness(1.03); }
+    button:active { transform: translateY(0); }
+    button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+    .app {
+      width: min(1160px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 22px 0 38px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      color: white;
+      margin-bottom: 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo {
+      width: 50px;
+      height: 50px;
+      display: grid;
+      place-items: center;
+      border-radius: 16px;
+      background: rgba(255,255,255,.2);
+      border: 1px solid rgba(255,255,255,.35);
+      box-shadow: 0 10px 30px rgba(0,0,0,.12);
+      font-size: 26px;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: clamp(22px, 3vw, 34px);
+      line-height: 1.05;
+    }
+
+    .brand p {
+      margin: 5px 0 0;
+      opacity: .86;
+      font-size: 14px;
+    }
+
+    .mode-switch {
+      background: rgba(255,255,255,.16);
+      padding: 5px;
+      border-radius: 14px;
+      display: flex;
+      gap: 5px;
+      border: 1px solid rgba(255,255,255,.25);
+    }
+
+    .mode-switch button {
+      border-radius: 10px;
+      padding: 10px 14px;
+      background: transparent;
+      color: white;
+      font-weight: 750;
+    }
+
+    .mode-switch button.active {
+      color: var(--primary-dark);
+      background: white;
+      box-shadow: 0 6px 16px rgba(0,0,0,.12);
+    }
+
+    .panel {
+      background: var(--paper);
+      backdrop-filter: blur(12px);
+      border-radius: 26px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(255,255,255,.7);
+      overflow: hidden;
+    }
+
+    .student-view {
+      min-height: 680px;
+      padding: clamp(18px, 3vw, 34px);
+    }
+
+    .lesson-header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 18px;
+      align-items: start;
+      margin-bottom: 18px;
+    }
+
+    .lesson-title {
+      margin: 0;
+      font-size: clamp(24px, 3vw, 38px);
+      color: #312e81;
+    }
+
+    .lesson-subtitle {
+      margin: 7px 0 0;
+      color: var(--muted);
+    }
+
+    .score-badge {
+      min-width: 130px;
+      text-align: center;
+      background: #eef2ff;
+      color: #4338ca;
+      border-radius: 18px;
+      padding: 10px 14px;
+      font-weight: 800;
+    }
+
+    .progress-shell {
+      height: 13px;
+      background: #e8eafc;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #22c55e, #14b8a6);
+      transition: width .35s ease;
+    }
+
+    .card-stage {
+      perspective: 1000px;
+      max-width: 780px;
+      margin: 0 auto;
+    }
+
+    .speaking-card {
+      min-height: 385px;
+      border-radius: 28px;
+      padding: clamp(22px, 4vw, 40px);
+      background:
+        linear-gradient(145deg, rgba(255,255,255,.97), rgba(246,248,255,.95));
+      border: 2px solid #ddd9ff;
+      box-shadow: 0 24px 70px rgba(66, 51, 134, .22);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      animation: cardIn .34s ease;
+    }
+
+    @keyframes cardIn {
+      from { transform: translateY(14px) rotateX(4deg); opacity: 0; }
+      to { transform: translateY(0) rotateX(0); opacity: 1; }
+    }
+
+    .speaking-card::before,
+    .speaking-card::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .speaking-card::before {
+      width: 190px;
+      height: 190px;
+      right: -70px;
+      top: -80px;
+      background: rgba(139,92,246,.13);
+    }
+
+    .speaking-card::after {
+      width: 150px;
+      height: 150px;
+      left: -55px;
+      bottom: -70px;
+      background: rgba(14,165,233,.13);
+    }
+
+    .card-number {
+      position: absolute;
+      left: 22px;
+      top: 20px;
+      background: #ede9fe;
+      color: #6d28d9;
+      font-weight: 850;
+      padding: 8px 13px;
+      border-radius: 999px;
+      z-index: 1;
+    }
+
+    .question-image-wrap {
+      display: none;
+      margin: 2px auto 17px;
+      width: min(310px, 100%);
+      height: 170px;
+      border-radius: 18px;
+      overflow: hidden;
+      background: #f1f5f9;
+      border: 1px solid var(--line);
+      z-index: 1;
+    }
+
+    .question-image-wrap.show { display: block; }
+
+    .question-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .question {
+      margin: 20px auto 13px;
+      max-width: 680px;
+      text-align: center;
+      font-size: clamp(28px, 5vw, 48px);
+      line-height: 1.2;
+      color: #1e1b4b;
+      z-index: 1;
+    }
+
+    .hint {
+      margin: 0 auto;
+      max-width: 650px;
+      text-align: center;
+      font-size: clamp(16px, 2.5vw, 21px);
+      color: var(--muted);
+      z-index: 1;
+    }
+
+    .model-answer {
+      display: none;
+      margin: 18px auto 0;
+      padding: 13px 18px;
+      max-width: 650px;
+      border-radius: 14px;
+      background: #ecfdf5;
+      color: #047857;
+      text-align: center;
+      font-weight: 750;
+      z-index: 1;
+    }
+
+    .model-answer.show { display: block; }
+
+    .primary-actions,
+    .record-actions,
+    .nav-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .primary-actions { margin: 22px 0 12px; }
+    .record-actions { margin: 10px 0 8px; }
+    .nav-actions { margin-top: 20px; }
+
+    .btn {
+      min-height: 46px;
+      padding: 11px 17px;
+      border-radius: 13px;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-secondary { background: #e0e7ff; color: #3730a3; }
+    .btn-success { background: var(--success); color: white; }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-warning { background: var(--secondary); color: #4d3800; }
+    .btn-light { background: white; color: #334155; border: 1px solid var(--line); }
+
+    .recording {
+      animation: pulse 1.25s infinite;
+    }
+
+    @keyframes pulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(230,57,70,.3); }
+      50% { box-shadow: 0 0 0 12px rgba(230,57,70,0); }
+    }
+
+    .record-status {
+      text-align: center;
+      min-height: 25px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .audio-player {
+      width: min(560px, 100%);
+      display: none;
+      margin: 10px auto 0;
+    }
+
+    .audio-player.show { display: block; }
+
+    .transcript-box {
+      display: none;
+      max-width: 700px;
+      margin: 13px auto 0;
+      border: 1px dashed #a5b4fc;
+      background: #f5f3ff;
+      border-radius: 14px;
+      padding: 13px;
+      color: #4338ca;
+    }
+
+    .transcript-box.show { display: block; }
+
+
+    .pronunciation-score {
+      display: none;
+      max-width: 700px;
+      margin: 14px auto 0;
+      padding: 16px;
+      border: 1px solid #c7d2fe;
+      border-radius: 18px;
+      background: linear-gradient(145deg, #ffffff, #f8faff);
+      box-shadow: 0 10px 30px rgba(67, 56, 202, .10);
+    }
+
+    .pronunciation-score.show { display: block; }
+
+    .score-top {
+      display: grid;
+      grid-template-columns: 92px 1fr;
+      gap: 15px;
+      align-items: center;
+    }
+
+    .score-circle {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: conic-gradient(#22c55e var(--score-angle, 0deg), #e2e8f0 0);
+      position: relative;
+    }
+
+    .score-circle::before {
+      content: "";
+      position: absolute;
+      inset: 8px;
+      border-radius: 50%;
+      background: white;
+    }
+
+    .score-number {
+      position: relative;
+      z-index: 1;
+      font-size: 25px;
+      font-weight: 900;
+      color: #312e81;
+    }
+
+    .score-title {
+      margin: 0 0 5px;
+      font-size: 20px;
+      color: #312e81;
+    }
+
+    .score-message {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .score-comparison {
+      display: grid;
+      gap: 9px;
+      margin-top: 14px;
+      padding-top: 13px;
+      border-top: 1px solid var(--line);
+    }
+
+    .score-line {
+      line-height: 1.65;
+      color: #334155;
+    }
+
+    .score-line strong {
+      display: inline-block;
+      min-width: 112px;
+      color: #475569;
+    }
+
+    .word-ok,
+    .word-missing,
+    .word-extra {
+      display: inline-block;
+      margin: 2px 3px 2px 0;
+      padding: 2px 6px;
+      border-radius: 7px;
+      font-weight: 750;
+    }
+
+    .word-ok { background: #dcfce7; color: #15803d; }
+    .word-missing { background: #fee2e2; color: #b91c1c; text-decoration: underline; }
+    .word-extra { background: #fef3c7; color: #a16207; }
+
+    .score-tip {
+      margin-top: 11px;
+      padding: 10px 12px;
+      border-radius: 11px;
+      background: #eef2ff;
+      color: #4338ca;
+      font-weight: 700;
+      line-height: 1.45;
+    }
+
+    .final-score-summary {
+      display: none;
+      width: min(430px, 100%);
+      margin: 16px auto;
+      padding: 16px;
+      border-radius: 18px;
+      background: #eef2ff;
+      color: #3730a3;
+      font-size: 18px;
+      font-weight: 850;
+    }
+
+    .final-score-summary.show { display: block; }
+
+    .start-screen,
+    .finish-screen {
+      min-height: 570px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 28px;
+    }
+
+    .start-content, .finish-content { max-width: 650px; }
+
+    .start-icon, .finish-icon {
+      font-size: 76px;
+      margin-bottom: 14px;
+    }
+
+    .start-content h2, .finish-content h2 {
+      font-size: clamp(30px, 5vw, 50px);
+      margin: 0;
+      color: #312e81;
+    }
+
+    .start-content p, .finish-content p {
+      font-size: 18px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .name-input {
+      width: min(430px, 100%);
+      padding: 14px 16px;
+      border: 2px solid #c7d2fe;
+      border-radius: 14px;
+      outline: none;
+      font-size: 18px;
+      margin: 8px 0 14px;
+    }
+
+    .name-input:focus { border-color: var(--primary); }
+
+    .teacher-view {
+      display: none;
+      padding: clamp(18px, 3vw, 30px);
+    }
+
+    .teacher-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .teacher-head h2 {
+      margin: 0;
+      color: #312e81;
+    }
+
+    .lesson-settings {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      background: #f8fafc;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 800;
+      color: #475569;
+      margin-bottom: 6px;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      border: 1px solid #cbd5e1;
+      border-radius: 11px;
+      padding: 10px 12px;
+      outline: none;
+      background: white;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(101,71,217,.11);
+    }
+
+    textarea { min-height: 76px; resize: vertical; }
+
+    .cards-editor {
+      display: grid;
+      gap: 14px;
+    }
+
+    .editor-card {
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      padding: 15px;
+      background: white;
+    }
+
+    .editor-card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 11px;
+    }
+
+    .editor-card-head strong { color: #4338ca; }
+
+    .editor-grid {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 12px;
+    }
+
+    .editor-grid .full { grid-column: 1 / -1; }
+
+    .image-upload-box {
+      display: grid;
+      grid-template-columns: minmax(160px, 220px) 1fr;
+      gap: 14px;
+      align-items: center;
+      padding: 12px;
+      border: 1px dashed #a5b4fc;
+      border-radius: 14px;
+      background: #f8f7ff;
+    }
+
+    .image-preview-wrap {
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background: white;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .image-preview {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+    }
+
+    .image-preview.show { display: block; }
+    .image-preview-wrap.has-image .image-empty { display: none; }
+
+    .image-upload-controls {
+      display: grid;
+      gap: 9px;
+    }
+
+    .image-upload-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .upload-image-input { display: none; }
+
+    .teacher-footer {
+      position: sticky;
+      bottom: 0;
+      margin: 20px -30px -30px;
+      padding: 14px 30px;
+      background: rgba(255,255,255,.95);
+      border-top: 1px solid var(--line);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 10px;
+      backdrop-filter: blur(10px);
+    }
+
+    .teacher-footer .group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+    }
+
+    .hidden { display: none !important; }
+
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      max-width: 330px;
+      padding: 13px 17px;
+      color: white;
+      background: #1e293b;
+      border-radius: 13px;
+      box-shadow: 0 14px 45px rgba(0,0,0,.25);
+      opacity: 0;
+      transform: translateY(14px);
+      pointer-events: none;
+      transition: .25s ease;
+      z-index: 99;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .small-note {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    @media (max-width: 760px) {
+      .topbar { align-items: flex-start; flex-direction: column; }
+      .mode-switch { width: 100%; }
+      .mode-switch button { flex: 1; }
+      .lesson-header { grid-template-columns: 1fr; }
+      .score-badge { justify-self: start; }
+      .lesson-settings, .editor-grid { grid-template-columns: 1fr; }
+      .image-upload-box { grid-template-columns: 1fr; }
+      .editor-grid .full { grid-column: auto; }
+      .speaking-card { min-height: 360px; }
+      .teacher-footer { margin-left: -18px; margin-right: -18px; margin-bottom: -18px; padding: 13px 18px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo">🎤</div>
+        <div>
+          <h1>Speaking Cards Classroom</h1>
+          <p>Nghe câu hỏi • Nói câu trả lời • Ghi âm • Luyện tập</p>
+        </div>
+      </div>
+
+      <div class="mode-switch">
+        <button id="studentModeBtn" class="active">👧 Chế độ học sinh</button>
+        <button id="teacherModeBtn">⚙️ Chế độ giáo viên</button>
+      </div>
+    </header>
+
+    <section class="panel">
+      <div id="studentView" class="student-view">
+        <div id="startScreen" class="start-screen">
+          <div class="start-content">
+            <div class="start-icon">🗣️</div>
+            <h2 id="startLessonTitle">EOW 1 – Unit 2: My World</h2>
+            <p id="startLessonSubtitle">Pick a card, listen carefully and answer in English.</p>
+            <input id="studentName" class="name-input" type="text" placeholder="Nhập tên học sinh (không bắt buộc)" />
+            <div>
+              <button id="startBtn" class="btn btn-primary">▶️ Bắt đầu luyện nói</button>
+            </div>
+            <p class="small-note">Khi ghi âm, trình duyệt sẽ hỏi quyền sử dụng micro.</p>
+          </div>
+        </div>
+
+        <div id="practiceScreen" class="hidden">
+          <div class="lesson-header">
+            <div>
+              <h2 id="lessonTitle" class="lesson-title"></h2>
+              <p id="lessonSubtitle" class="lesson-subtitle"></p>
+            </div>
+            <div id="progressText" class="score-badge">Thẻ 1 / 1</div>
+          </div>
+
+          <div class="progress-shell">
+            <div id="progressBar" class="progress-bar"></div>
+          </div>
+
+          <div class="card-stage">
+            <article id="speakingCard" class="speaking-card">
+              <div id="cardNumber" class="card-number">Card 1</div>
+              <div id="questionImageWrap" class="question-image-wrap">
+                <img id="questionImage" class="question-image" alt="Speaking prompt" />
+              </div>
+              <h3 id="questionText" class="question"></h3>
+              <p id="hintText" class="hint"></p>
+              <div id="modelAnswer" class="model-answer"></div>
+            </article>
+          </div>
+
+          <div class="primary-actions">
+            <button id="listenBtn" class="btn btn-primary">🔊 Nghe câu hỏi</button>
+            <button id="slowBtn" class="btn btn-secondary">🐢 Nghe chậm</button>
+            <button id="answerBtn" class="btn btn-warning">💡 Xem câu trả lời mẫu</button>
+          </div>
+
+          <div class="record-actions">
+            <button id="recordBtn" class="btn btn-danger">🎙️ Bắt đầu ghi âm</button>
+            <button id="stopBtn" class="btn btn-light" disabled>⏹️ Dừng ghi âm</button>
+            <button id="recognizeBtn" class="btn btn-secondary">🎯 Nói và chấm điểm</button>
+          </div>
+
+          <div id="recordStatus" class="record-status">Sẵn sàng ghi âm câu trả lời.</div>
+          <audio id="audioPlayer" class="audio-player" controls></audio>
+          <div id="transcriptBox" class="transcript-box"></div>
+
+          <div id="pronunciationScore" class="pronunciation-score" aria-live="polite">
+            <div class="score-top">
+              <div id="scoreCircle" class="score-circle">
+                <span id="scoreNumber" class="score-number">0</span>
+              </div>
+              <div>
+                <h4 id="scoreTitle" class="score-title">Pronunciation score</h4>
+                <p id="scoreMessage" class="score-message"></p>
+              </div>
+            </div>
+            <div class="score-comparison">
+              <div id="expectedWords" class="score-line"></div>
+              <div id="spokenWords" class="score-line"></div>
+            </div>
+            <div id="scoreTip" class="score-tip"></div>
+          </div>
+
+          <div class="nav-actions">
+            <button id="skipBtn" class="btn btn-light">⏭️ Bỏ qua</button>
+            <button id="completeBtn" class="btn btn-success">✅ Hoàn thành thẻ này</button>
+          </div>
+        </div>
+
+        <div id="finishScreen" class="finish-screen hidden">
+          <div class="finish-content">
+            <div class="finish-icon">🏆</div>
+            <h2>Great speaking!</h2>
+            <p id="finishMessage">Em đã hoàn thành tất cả các thẻ luyện nói.</p>
+            <div id="finalScoreSummary" class="final-score-summary"></div>
+            <button id="restartBtn" class="btn btn-primary">🔄 Chơi lại</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="teacherView" class="teacher-view">
+        <div class="teacher-head">
+          <div>
+            <h2>Thiết lập bài Speaking Cards</h2>
+            <p class="small-note">Nội dung được lưu ngay trên trình duyệt này.</p>
+          </div>
+          <button id="addCardBtn" class="btn btn-primary">➕ Thêm thẻ</button>
+        </div>
+
+        <div class="lesson-settings">
+          <div>
+            <label for="editLessonTitle">Tên bài học</label>
+            <input id="editLessonTitle" type="text" />
+          </div>
+          <div>
+            <label for="editLessonSubtitle">Hướng dẫn học sinh</label>
+            <input id="editLessonSubtitle" type="text" />
+          </div>
+          <div>
+            <label for="voiceLang">Ngôn ngữ giọng đọc</label>
+            <select id="voiceLang">
+              <option value="en-US">English – US</option>
+              <option value="en-GB">English – UK</option>
+              <option value="en-AU">English – Australia</option>
+            </select>
+          </div>
+          <div>
+            <label for="shuffleCards">Thứ tự thẻ</label>
+            <select id="shuffleCards">
+              <option value="yes">Xáo trộn ngẫu nhiên</option>
+              <option value="no">Giữ nguyên thứ tự</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="cardsEditor" class="cards-editor"></div>
+
+        <div class="teacher-footer">
+          <div class="group">
+            <button id="saveBtn" class="btn btn-success">💾 Lưu bài học</button>
+            <button id="resetBtn" class="btn btn-light">↩️ Khôi phục mẫu</button>
+          </div>
+          <div class="group">
+            <button id="exportBtn" class="btn btn-secondary">📤 Xuất nội dung JSON</button>
+            <button id="importBtn" class="btn btn-secondary">📥 Nhập nội dung JSON</button>
+            <input id="importFile" type="file" accept=".json,application/json" class="hidden" />
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    "use strict";
+
+    const STORAGE_KEY = "speakingCardsClassroom_v1";
+
+    const defaultLesson = {
+      title: "EOW 1 – Unit 2: My World",
+      subtitle: "Pick a card, listen carefully and answer in English.",
+      language: "en-US",
+      shuffle: true,
+      cards: [
+        {
+          question: "Hello! What's your name?",
+          hint: "Answer: My name is ...",
+          answer: "My name is Anna.",
+          image: ""
+        },
+        {
+          question: "How old are you?",
+          hint: "Answer with your age.",
+          answer: "I am seven years old.",
+          image: ""
+        },
+        {
+          question: "How are you today?",
+          hint: "Try: I am happy / great / fine.",
+          answer: "I am great today.",
+          image: ""
+        },
+        {
+          question: "What color do you like?",
+          hint: "Use: I like ...",
+          answer: "I like blue.",
+          image: ""
+        },
+        {
+          question: "What animal do you like?",
+          hint: "Use: I like ...",
+          answer: "I like butterflies.",
+          image: ""
+        },
+        {
+          question: "How many birds do you see?",
+          hint: "Use: I see ... birds.",
+          answer: "I see three birds.",
+          image: ""
+        },
+        {
+          question: "Is it a bee?",
+          hint: "Answer: Yes, it is. / No, it isn't.",
+          answer: "Yes, it is.",
+          image: ""
+        },
+        {
+          question: "Are they rocks?",
+          hint: "Answer: Yes, they are. / No, they aren't.",
+          answer: "Yes, they are.",
+          image: ""
+        },
+        {
+          question: "Are the clouds in the sky?",
+          hint: "Answer in a full sentence.",
+          answer: "Yes, they are.",
+          image: ""
+        },
+        {
+          question: "Where is the butterfly?",
+          hint: "Use: It is on / under / next to ...",
+          answer: "It is next to the flower.",
+          image: ""
+        }
+      ]
+    };
+
+    let lesson = loadLesson();
+    let deck = [];
+    let currentIndex = 0;
+    let completed = 0;
+    let mediaRecorder = null;
+    let mediaStream = null;
+    let chunks = [];
+    let currentAudioUrl = null;
+    let recognition = null;
+    let scoreResults = [];
+    let currentCardScore = null;
+
+    const $ = (id) => document.getElementById(id);
+
+    const studentModeBtn = $("studentModeBtn");
+    const teacherModeBtn = $("teacherModeBtn");
+    const studentView = $("studentView");
+    const teacherView = $("teacherView");
+
+    function clone(value) {
+      return JSON.parse(JSON.stringify(value));
+    }
+
+    function loadLesson() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (!saved) return clone(defaultLesson);
+        const parsed = JSON.parse(saved);
+        if (!parsed.cards || !Array.isArray(parsed.cards)) throw new Error("Invalid lesson");
+        return parsed;
+      } catch (error) {
+        console.warn(error);
+        return clone(defaultLesson);
+      }
+    }
+
+    function persistLesson() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(lesson));
+        return true;
+      } catch (error) {
+        console.error(error);
+        toast("Không đủ dung lượng lưu ảnh. Hãy dùng ảnh nhỏ hơn hoặc bớt ảnh.");
+        return false;
+      }
+    }
+
+    function toast(message) {
+      const el = $("toast");
+      el.textContent = message;
+      el.classList.add("show");
+      clearTimeout(toast.timer);
+      toast.timer = setTimeout(() => el.classList.remove("show"), 2500);
+    }
+
+    function setMode(mode) {
+      const student = mode === "student";
+      studentView.style.display = student ? "block" : "none";
+      teacherView.style.display = student ? "none" : "block";
+      studentModeBtn.classList.toggle("active", student);
+      teacherModeBtn.classList.toggle("active", !student);
+      if (!student) renderEditor();
+      updateStartScreen();
+    }
+
+    studentModeBtn.addEventListener("click", () => setMode("student"));
+    teacherModeBtn.addEventListener("click", () => setMode("teacher"));
+
+    function updateStartScreen() {
+      $("startLessonTitle").textContent = lesson.title;
+      $("startLessonSubtitle").textContent = lesson.subtitle;
+    }
+
+    function shuffleArray(array) {
+      const output = [...array];
+      for (let i = output.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [output[i], output[j]] = [output[j], output[i]];
+      }
+      return output;
+    }
+
+    function startPractice() {
+      if (!lesson.cards.length) {
+        toast("Bài học chưa có thẻ câu hỏi.");
+        return;
+      }
+
+      deck = lesson.shuffle ? shuffleArray(lesson.cards) : [...lesson.cards];
+      currentIndex = 0;
+      completed = 0;
+      scoreResults = new Array(deck.length).fill(null);
+      currentCardScore = null;
+
+      $("startScreen").classList.add("hidden");
+      $("finishScreen").classList.add("hidden");
+      $("practiceScreen").classList.remove("hidden");
+
+      $("lessonTitle").textContent = lesson.title;
+      $("lessonSubtitle").textContent = lesson.subtitle;
+
+      renderCurrentCard(true);
+    }
+
+    function resetRecordingUi() {
+      $("recordStatus").textContent = "Sẵn sàng ghi âm câu trả lời.";
+      $("audioPlayer").classList.remove("show");
+      $("audioPlayer").removeAttribute("src");
+      $("transcriptBox").classList.remove("show");
+      $("transcriptBox").textContent = "";
+      $("pronunciationScore").classList.remove("show");
+      $("scoreNumber").textContent = "0";
+      $("scoreCircle").style.setProperty("--score-angle", "0deg");
+      $("expectedWords").innerHTML = "";
+      $("spokenWords").innerHTML = "";
+      $("scoreTip").textContent = "";
+      currentCardScore = null;
+      $("recordBtn").disabled = false;
+      $("recordBtn").classList.remove("recording");
+      $("stopBtn").disabled = true;
+
+      if (currentAudioUrl) {
+        URL.revokeObjectURL(currentAudioUrl);
+        currentAudioUrl = null;
+      }
+    }
+
+    function renderCurrentCard(autoSpeak = false) {
+      if (currentIndex >= deck.length) {
+        finishPractice();
+        return;
+      }
+
+      resetRecordingUi();
+
+      const card = deck[currentIndex];
+      const cardElement = $("speakingCard");
+      cardElement.style.animation = "none";
+      void cardElement.offsetWidth;
+      cardElement.style.animation = "";
+
+      $("cardNumber").textContent = `Card ${currentIndex + 1}`;
+      $("questionText").textContent = card.question || "Question";
+      $("hintText").textContent = card.hint || "Answer in English.";
+      $("modelAnswer").textContent = card.answer ? `Suggested answer: ${card.answer}` : "";
+      $("modelAnswer").classList.remove("show");
+
+      const imageWrap = $("questionImageWrap");
+      const image = $("questionImage");
+      if (card.image && card.image.trim()) {
+        image.src = card.image.trim();
+        imageWrap.classList.add("show");
+        image.onerror = () => imageWrap.classList.remove("show");
+      } else {
+        image.removeAttribute("src");
+        imageWrap.classList.remove("show");
+      }
+
+      const shown = Math.min(currentIndex + 1, deck.length);
+      $("progressText").textContent = `Thẻ ${shown} / ${deck.length}`;
+      $("progressBar").style.width = `${(completed / deck.length) * 100}%`;
+
+      if (autoSpeak) {
+        setTimeout(() => speakText(card.question, 0.9), 350);
+      }
+    }
+
+    function getEnglishVoice(language) {
+      const voices = speechSynthesis.getVoices();
+      return (
+        voices.find(v => v.lang === language && /Google|Microsoft|Samantha|Daniel|Karen/i.test(v.name)) ||
+        voices.find(v => v.lang === language) ||
+        voices.find(v => v.lang && v.lang.startsWith("en")) ||
+        null
+      );
+    }
+
+    function speakText(text, rate = 0.9) {
+      if (!("speechSynthesis" in window)) {
+        toast("Trình duyệt này chưa hỗ trợ đọc văn bản.");
+        return;
+      }
+      speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = lesson.language || "en-US";
+      utterance.rate = rate;
+      utterance.pitch = 1.02;
+      utterance.volume = 1;
+      const voice = getEnglishVoice(utterance.lang);
+      if (voice) utterance.voice = voice;
+      speechSynthesis.speak(utterance);
+    }
+
+    $("listenBtn").addEventListener("click", () => {
+      speakText(deck[currentIndex].question, 0.9);
+    });
+
+    $("slowBtn").addEventListener("click", () => {
+      speakText(deck[currentIndex].question, 0.68);
+    });
+
+    $("answerBtn").addEventListener("click", () => {
+      const answer = $("modelAnswer");
+      answer.classList.toggle("show");
+      $("answerBtn").textContent = answer.classList.contains("show")
+        ? "🙈 Ẩn câu trả lời mẫu"
+        : "💡 Xem câu trả lời mẫu";
+    });
+
+    async function startRecording() {
+      try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          throw new Error("Microphone recording is not supported.");
+        }
+
+        mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        chunks = [];
+
+        const preferredTypes = [
+          "audio/webm;codecs=opus",
+          "audio/webm",
+          "audio/mp4",
+          "audio/ogg;codecs=opus"
+        ];
+
+        const mimeType = preferredTypes.find(type =>
+          window.MediaRecorder &&
+          MediaRecorder.isTypeSupported &&
+          MediaRecorder.isTypeSupported(type)
+        );
+
+        mediaRecorder = mimeType
+          ? new MediaRecorder(mediaStream, { mimeType })
+          : new MediaRecorder(mediaStream);
+
+        mediaRecorder.ondataavailable = event => {
+          if (event.data && event.data.size > 0) chunks.push(event.data);
+        };
+
+        mediaRecorder.onstop = () => {
+          const type = mediaRecorder.mimeType || "audio/webm";
+          const blob = new Blob(chunks, { type });
+          currentAudioUrl = URL.createObjectURL(blob);
+          $("audioPlayer").src = currentAudioUrl;
+          $("audioPlayer").classList.add("show");
+          $("recordStatus").textContent = "Đã ghi âm xong. Hãy nghe lại câu trả lời của em.";
+
+          if (mediaStream) {
+            mediaStream.getTracks().forEach(track => track.stop());
+            mediaStream = null;
+          }
+        };
+
+        mediaRecorder.onerror = () => {
+          $("recordStatus").textContent = "Có lỗi khi ghi âm. Hãy kiểm tra quyền micro.";
+        };
+
+        mediaRecorder.start();
+        $("recordBtn").disabled = true;
+        $("recordBtn").classList.add("recording");
+        $("stopBtn").disabled = false;
+        $("recordStatus").textContent = "Đang ghi âm... Em hãy trả lời bằng tiếng Anh.";
+      } catch (error) {
+        console.error(error);
+        $("recordStatus").textContent =
+          "Không thể mở micro. Hãy cho phép quyền micro hoặc mở trang bằng HTTPS/localhost.";
+        toast("Không mở được micro.");
+      }
+    }
+
+    function stopRecording() {
+      if (mediaRecorder && mediaRecorder.state === "recording") {
+        mediaRecorder.stop();
+      }
+      $("recordBtn").disabled = false;
+      $("recordBtn").classList.remove("recording");
+      $("stopBtn").disabled = true;
+    }
+
+    $("recordBtn").addEventListener("click", startRecording);
+    $("stopBtn").addEventListener("click", stopRecording);
+
+    function expandEnglishContractions(text) {
+      const replacements = [
+        [/\bi'm\b/gi, "i am"],
+        [/\byou're\b/gi, "you are"],
+        [/\bwe're\b/gi, "we are"],
+        [/\bthey're\b/gi, "they are"],
+        [/\bhe's\b/gi, "he is"],
+        [/\bshe's\b/gi, "she is"],
+        [/\bit's\b/gi, "it is"],
+        [/\bthat's\b/gi, "that is"],
+        [/\bthere's\b/gi, "there is"],
+        [/\bi've\b/gi, "i have"],
+        [/\byou've\b/gi, "you have"],
+        [/\bwe've\b/gi, "we have"],
+        [/\bthey've\b/gi, "they have"],
+        [/\bi'll\b/gi, "i will"],
+        [/\byou'll\b/gi, "you will"],
+        [/\bwe'll\b/gi, "we will"],
+        [/\bthey'll\b/gi, "they will"],
+        [/\bcan't\b/gi, "cannot"],
+        [/\bwon't\b/gi, "will not"],
+        [/\bisn't\b/gi, "is not"],
+        [/\baren't\b/gi, "are not"],
+        [/\bdon't\b/gi, "do not"],
+        [/\bdoesn't\b/gi, "does not"],
+        [/\bdidn't\b/gi, "did not"],
+        [/\bwasn't\b/gi, "was not"],
+        [/\bweren't\b/gi, "were not"],
+        [/\bhasn't\b/gi, "has not"],
+        [/\bhaven't\b/gi, "have not"],
+        [/\bhadn't\b/gi, "had not"]
+      ];
+      return replacements.reduce((value, [pattern, replacement]) => value.replace(pattern, replacement), text);
+    }
+
+    function normalizeSpeechText(text) {
+      return expandEnglishContractions(String(text || "").toLowerCase().replace(/[’‘]/g, "'"))
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9\s]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function levenshteinDistance(a, b) {
+      const left = Array.isArray(a) ? a : [...String(a)];
+      const right = Array.isArray(b) ? b : [...String(b)];
+      const previous = Array.from({ length: right.length + 1 }, (_, i) => i);
+
+      for (let i = 1; i <= left.length; i++) {
+        const current = [i];
+        for (let j = 1; j <= right.length; j++) {
+          const cost = left[i - 1] === right[j - 1] ? 0 : 1;
+          current[j] = Math.min(
+            current[j - 1] + 1,
+            previous[j] + 1,
+            previous[j - 1] + cost
+          );
+        }
+        previous.splice(0, previous.length, ...current);
+      }
+      return previous[right.length];
+    }
+
+    function similarityRatio(a, b) {
+      const maxLength = Math.max(a.length, b.length);
+      if (!maxLength) return 1;
+      return Math.max(0, 1 - levenshteinDistance(a, b) / maxLength);
+    }
+
+    function matchWords(expectedTokens, spokenTokens) {
+      const usedSpoken = new Set();
+      const expectedMatches = expectedTokens.map(expected => {
+        let bestIndex = -1;
+        let bestSimilarity = 0;
+
+        spokenTokens.forEach((spoken, index) => {
+          if (usedSpoken.has(index)) return;
+          const similarity = expected === spoken ? 1 : similarityRatio(expected, spoken);
+          if (similarity > bestSimilarity) {
+            bestSimilarity = similarity;
+            bestIndex = index;
+          }
+        });
+
+        const threshold = expected.length <= 3 ? 0.82 : 0.68;
+        if (bestIndex >= 0 && bestSimilarity >= threshold) {
+          usedSpoken.add(bestIndex);
+          return { word: expected, matched: true, similarity: bestSimilarity, spokenIndex: bestIndex };
+        }
+        return { word: expected, matched: false, similarity: 0, spokenIndex: -1 };
+      });
+
+      const spokenMatches = spokenTokens.map((word, index) => ({
+        word,
+        matched: usedSpoken.has(index)
+      }));
+
+      return { expectedMatches, spokenMatches };
+    }
+
+    function calculatePronunciationScore(expectedText, spokenText, confidence = 0) {
+      const expected = normalizeSpeechText(expectedText);
+      const spoken = normalizeSpeechText(spokenText);
+      const expectedTokens = expected ? expected.split(" ") : [];
+      const spokenTokens = spoken ? spoken.split(" ") : [];
+      const matches = matchWords(expectedTokens, spokenTokens);
+
+      const matchedWeight = matches.expectedMatches.reduce((sum, item) => sum + item.similarity, 0);
+      const recall = expectedTokens.length ? matchedWeight / expectedTokens.length : 0;
+      const precision = spokenTokens.length ? matchedWeight / spokenTokens.length : 0;
+      const wordF1 = precision + recall ? (2 * precision * recall) / (precision + recall) : 0;
+      const sequenceSimilarity = similarityRatio(expectedTokens, spokenTokens);
+      const characterSimilarity = similarityRatio(expected, spoken);
+      const browserConfidence = Number.isFinite(confidence) && confidence > 0.05
+        ? Math.min(1, confidence)
+        : null;
+
+      let scoreRatio;
+      if (expected && expected === spoken) {
+        scoreRatio = 1;
+      } else if (browserConfidence === null) {
+        scoreRatio = wordF1 * 0.60 + sequenceSimilarity * 0.25 + characterSimilarity * 0.15;
+      } else {
+        scoreRatio = wordF1 * 0.55 + sequenceSimilarity * 0.23 + characterSimilarity * 0.12 + browserConfidence * 0.10;
+      }
+
+      const score = Math.max(0, Math.min(100, Math.round(scoreRatio * 100)));
+      return {
+        score,
+        expected,
+        spoken,
+        expectedTokens,
+        spokenTokens,
+        expectedMatches: matches.expectedMatches,
+        spokenMatches: matches.spokenMatches,
+        confidence: browserConfidence
+      };
+    }
+
+    function getScoreFeedback(score) {
+      if (score >= 90) return {
+        title: "Excellent pronunciation!",
+        message: "Phát âm rất rõ và câu trả lời gần như trùng khớp hoàn toàn.",
+        tip: "Rất tốt! Em có thể chuyển sang thẻ tiếp theo."
+      };
+      if (score >= 75) return {
+        title: "Very good!",
+        message: "Câu trả lời rõ ràng và đúng phần lớn nội dung.",
+        tip: "Hãy nghe lại câu mẫu một lần và luyện các từ được đánh dấu đỏ."
+      };
+      if (score >= 60) return {
+        title: "Good effort!",
+        message: "Trình duyệt đã nhận ra phần lớn câu trả lời của em.",
+        tip: "Nói chậm hơn, rõ từng từ và giữ đúng thứ tự của câu mẫu."
+      };
+      if (score >= 40) return {
+        title: "Keep practicing!",
+        message: "Một số từ chưa được nhận diện đúng hoặc còn thiếu.",
+        tip: "Bấm nghe câu hỏi/câu mẫu, sau đó nói chậm từng cụm từ rồi thử lại."
+      };
+      return {
+        title: "Try again!",
+        message: "Câu nói chưa khớp nhiều với đáp án gợi ý.",
+        tip: "Đưa micro gần hơn, nói to vừa đủ và luyện từng từ được đánh dấu đỏ."
+      };
+    }
+
+    function renderPronunciationScore(result) {
+      const feedback = getScoreFeedback(result.score);
+      const scorePanel = $("pronunciationScore");
+      const hueClass = result.score >= 75 ? "#22c55e" : result.score >= 50 ? "#f59e0b" : "#ef4444";
+
+      $("scoreNumber").textContent = result.score;
+      $("scoreCircle").style.background =
+        `conic-gradient(${hueClass} ${result.score * 3.6}deg, #e2e8f0 0)`;
+      $("scoreTitle").textContent = feedback.title;
+      $("scoreMessage").textContent = `${feedback.message} Điểm: ${result.score}/100.`;
+
+      $("expectedWords").innerHTML = `<strong>Đáp án mẫu:</strong> ${result.expectedMatches.map(item =>
+        `<span class="${item.matched ? "word-ok" : "word-missing"}">${escapeHtml(item.word)}</span>`
+      ).join(" ")}`;
+
+      $("spokenWords").innerHTML = `<strong>Em đã nói:</strong> ${result.spokenMatches.length
+        ? result.spokenMatches.map(item =>
+            `<span class="${item.matched ? "word-ok" : "word-extra"}">${escapeHtml(item.word)}</span>`
+          ).join(" ")
+        : '<span class="word-missing">Chưa nhận diện được câu nói</span>'}`;
+
+      const missingWords = result.expectedMatches.filter(item => !item.matched).map(item => item.word);
+      $("scoreTip").textContent = missingWords.length
+        ? `${feedback.tip} Từ cần luyện: ${missingWords.join(", ")}.`
+        : feedback.tip;
+
+      scorePanel.classList.add("show");
+      currentCardScore = result.score;
+      scoreResults[currentIndex] = result.score;
+    }
+
+    function setupRecognition() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) return null;
+
+      const rec = new SpeechRecognition();
+      rec.lang = lesson.language || "en-US";
+      rec.continuous = false;
+      rec.interimResults = true;
+      rec.maxAlternatives = 3;
+      rec.finalTranscript = "";
+      rec.finalConfidence = 0;
+
+      rec.onstart = () => {
+        $("recognizeBtn").disabled = true;
+        $("recognizeBtn").textContent = "👂 Đang nghe...";
+        $("transcriptBox").classList.add("show");
+        $("transcriptBox").textContent = "Speak now...";
+        $("pronunciationScore").classList.remove("show");
+        $("recordStatus").textContent = "Đang nhận diện... Hãy nói trọn câu trả lời bằng tiếng Anh.";
+      };
+
+      rec.onresult = event => {
+        let fullTranscript = "";
+        let finalTranscript = "";
+        let confidenceTotal = 0;
+        let finalCount = 0;
+
+        for (let i = 0; i < event.results.length; i++) {
+          const result = event.results[i];
+          const alternative = result[0];
+          fullTranscript += `${alternative.transcript} `;
+          if (result.isFinal) {
+            finalTranscript += `${alternative.transcript} `;
+            if (Number.isFinite(alternative.confidence)) {
+              confidenceTotal += alternative.confidence;
+              finalCount++;
+            }
+          }
+        }
+
+        rec.finalTranscript = (finalTranscript || fullTranscript).trim();
+        rec.finalConfidence = finalCount ? confidenceTotal / finalCount : 0;
+        $("transcriptBox").textContent = `I heard: "${fullTranscript.trim()}"`;
+      };
+
+      rec.onerror = event => {
+        rec.hadError = true;
+        $("transcriptBox").classList.add("show");
+        $("transcriptBox").textContent =
+          `Không nhận diện được lời nói (${event.error}). Em vẫn có thể dùng chức năng ghi âm.`;
+        $("recordStatus").textContent = "Nhận diện chưa thành công. Hãy kiểm tra micro và thử lại.";
+      };
+
+      rec.onend = () => {
+        $("recognizeBtn").disabled = false;
+        $("recognizeBtn").textContent = "🎯 Nói và chấm điểm";
+
+        if (!rec.hadError && rec.finalTranscript) {
+          const card = deck[currentIndex];
+          const result = calculatePronunciationScore(
+            card.answer || card.hint || card.question,
+            rec.finalTranscript,
+            rec.finalConfidence
+          );
+          renderPronunciationScore(result);
+          $("recordStatus").textContent = "Đã nhận diện và chấm điểm. Em có thể nói lại để cải thiện điểm.";
+        }
+      };
+
+      return rec;
+    }
+
+    $("recognizeBtn").addEventListener("click", () => {
+      recognition = setupRecognition();
+      if (!recognition) {
+        $("transcriptBox").classList.add("show");
+        $("transcriptBox").textContent =
+          "Trình duyệt này chưa hỗ trợ nhận diện lời nói. Hãy dùng Chrome/Edge hoặc dùng chức năng ghi âm.";
+        return;
+      }
+      try {
+        recognition.start();
+      } catch (error) {
+        console.warn(error);
+      }
+    });
+
+    function goNext(markComplete) {
+      if (markComplete) completed++;
+      currentIndex++;
+      renderCurrentCard(true);
+    }
+
+    $("completeBtn").addEventListener("click", () => goNext(true));
+    $("skipBtn").addEventListener("click", () => goNext(false));
+
+    function finishPractice() {
+      $("practiceScreen").classList.add("hidden");
+      $("finishScreen").classList.remove("hidden");
+      $("progressBar").style.width = "100%";
+
+      const name = $("studentName").value.trim();
+      const prefix = name ? `${name}, em` : "Em";
+      const validScores = scoreResults.filter(score => Number.isFinite(score));
+      const averageScore = validScores.length
+        ? Math.round(validScores.reduce((sum, score) => sum + score, 0) / validScores.length)
+        : null;
+
+      $("finishMessage").textContent =
+        `${prefix} đã hoàn thành ${completed}/${deck.length} thẻ. Hãy luyện thêm những câu còn khó nhé!`;
+
+      const summary = $("finalScoreSummary");
+      if (averageScore !== null) {
+        summary.textContent = `Điểm phát âm trung bình: ${averageScore}/100 • Đã chấm ${validScores.length}/${deck.length} thẻ`;
+        summary.classList.add("show");
+      } else {
+        summary.textContent = "Chưa có thẻ nào được chấm điểm phát âm.";
+        summary.classList.add("show");
+      }
+
+      speakText(averageScore !== null
+        ? `Great speaking! Your average score is ${averageScore} out of one hundred.`
+        : "Great speaking! Well done!", 0.88);
+    }
+
+    $("startBtn").addEventListener("click", startPractice);
+    $("restartBtn").addEventListener("click", () => {
+      $("finishScreen").classList.add("hidden");
+      $("finalScoreSummary").classList.remove("show");
+      $("startScreen").classList.remove("hidden");
+    });
+
+    function escapeHtml(text) {
+      return String(text ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function updateImagePreview(item, imageValue) {
+      const hiddenInput = item.querySelector(".field-image");
+      const urlInput = item.querySelector(".image-url-input");
+      const previewWrap = item.querySelector(".image-preview-wrap");
+      const preview = item.querySelector(".image-preview");
+      const removeBtn = item.querySelector(".remove-image");
+
+      hiddenInput.value = imageValue || "";
+      if (!imageValue) {
+        preview.removeAttribute("src");
+        preview.classList.remove("show");
+        previewWrap.classList.remove("has-image");
+        removeBtn.disabled = true;
+        return;
+      }
+
+      preview.src = imageValue;
+      preview.classList.add("show");
+      previewWrap.classList.add("has-image");
+      removeBtn.disabled = false;
+
+      preview.onerror = () => {
+        preview.classList.remove("show");
+        previewWrap.classList.remove("has-image");
+      };
+
+      if (imageValue.startsWith("data:")) urlInput.value = "";
+    }
+
+    function compressImageFile(file, maxSize = 1200, quality = 0.84) {
+      return new Promise((resolve, reject) => {
+        if (!file.type.startsWith("image/")) {
+          reject(new Error("File không phải hình ảnh."));
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error("Không đọc được file ảnh."));
+        reader.onload = () => {
+          const img = new Image();
+          img.onerror = () => reject(new Error("Ảnh không hợp lệ."));
+          img.onload = () => {
+            const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+            const width = Math.max(1, Math.round(img.width * scale));
+            const height = Math.max(1, Math.round(img.height * scale));
+            const canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, width, height);
+
+            const outputType = file.type === "image/png" && file.size < 450000
+              ? "image/png"
+              : "image/jpeg";
+            resolve(canvas.toDataURL(outputType, outputType === "image/png" ? undefined : quality));
+          };
+          img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function renderEditor() {
+      $("editLessonTitle").value = lesson.title || "";
+      $("editLessonSubtitle").value = lesson.subtitle || "";
+      $("voiceLang").value = lesson.language || "en-US";
+      $("shuffleCards").value = lesson.shuffle ? "yes" : "no";
+
+      const editor = $("cardsEditor");
+      editor.innerHTML = "";
+
+      lesson.cards.forEach((card, index) => {
+        const item = document.createElement("section");
+        item.className = "editor-card";
+        item.dataset.index = index;
+        item.innerHTML = `
+          <div class="editor-card-head">
+            <strong>Speaking card ${index + 1}</strong>
+            <button class="btn btn-light delete-card" type="button">🗑️ Xóa</button>
+          </div>
+          <div class="editor-grid">
+            <div class="full">
+              <label>Câu hỏi tiếng Anh</label>
+              <textarea class="field-question" placeholder="Ví dụ: What color do you like?">${escapeHtml(card.question)}</textarea>
+            </div>
+            <div>
+              <label>Gợi ý trả lời</label>
+              <textarea class="field-hint" placeholder="Ví dụ: I like ...">${escapeHtml(card.hint)}</textarea>
+            </div>
+            <div>
+              <label>Câu trả lời mẫu</label>
+              <textarea class="field-answer" placeholder="Ví dụ: I like blue.">${escapeHtml(card.answer)}</textarea>
+            </div>
+            <div class="full">
+              <label>Hình ảnh cho câu hỏi (không bắt buộc)</label>
+              <div class="image-upload-box">
+                <div class="image-preview-wrap ${card.image ? 'has-image' : ''}">
+                  <span class="image-empty">Chưa có ảnh</span>
+                  <img class="image-preview ${card.image ? 'show' : ''}" src="${escapeHtml(card.image)}" alt="Ảnh xem trước" />
+                </div>
+                <div class="image-upload-controls">
+                  <input class="field-image" type="hidden" value="${escapeHtml(card.image)}" />
+                  <input class="upload-image-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif" />
+                  <div class="image-upload-buttons">
+                    <button class="btn btn-secondary choose-image" type="button">🖼️ Upload ảnh</button>
+                    <button class="btn btn-light remove-image" type="button" ${card.image ? '' : 'disabled'}>🗑️ Xóa ảnh</button>
+                  </div>
+                  <div>
+                    <label>Hoặc dán đường dẫn ảnh</label>
+                    <input class="image-url-input" type="text" value="${card.image && !card.image.startsWith('data:') ? escapeHtml(card.image) : ''}" placeholder="https://.../image.jpg" />
+                  </div>
+                  <p class="small-note">Ảnh tải lên sẽ được tự thu nhỏ để lưu cùng bài học trên trình duyệt.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+
+        item.querySelector(".delete-card").addEventListener("click", () => {
+          if (lesson.cards.length <= 1) {
+            toast("Bài học cần ít nhất một thẻ.");
+            return;
+          }
+          lesson.cards.splice(index, 1);
+          renderEditor();
+        });
+
+        const fileInput = item.querySelector(".upload-image-input");
+        const urlInput = item.querySelector(".image-url-input");
+
+        item.querySelector(".choose-image").addEventListener("click", () => fileInput.click());
+
+        fileInput.addEventListener("change", async event => {
+          const file = event.target.files?.[0];
+          if (!file) return;
+          try {
+            toast("Đang xử lý ảnh...");
+            const imageData = await compressImageFile(file);
+            updateImagePreview(item, imageData);
+            toast("Đã thêm ảnh vào thẻ.");
+          } catch (error) {
+            console.error(error);
+            toast(error.message || "Không thể tải ảnh.");
+          } finally {
+            event.target.value = "";
+          }
+        });
+
+        urlInput.addEventListener("change", () => {
+          updateImagePreview(item, urlInput.value.trim());
+        });
+
+        item.querySelector(".remove-image").addEventListener("click", () => {
+          urlInput.value = "";
+          updateImagePreview(item, "");
+          toast("Đã xóa ảnh khỏi thẻ.");
+        });
+
+        editor.appendChild(item);
+      });
+    }
+
+    function collectEditorData() {
+      const cards = [...document.querySelectorAll(".editor-card")].map(item => ({
+        question: item.querySelector(".field-question").value.trim(),
+        hint: item.querySelector(".field-hint").value.trim(),
+        answer: item.querySelector(".field-answer").value.trim(),
+        image: item.querySelector(".field-image").value.trim()
+      })).filter(card => card.question);
+
+      return {
+        title: $("editLessonTitle").value.trim() || "Speaking Cards",
+        subtitle: $("editLessonSubtitle").value.trim() || "Listen and answer in English.",
+        language: $("voiceLang").value,
+        shuffle: $("shuffleCards").value === "yes",
+        cards
+      };
+    }
+
+    $("addCardBtn").addEventListener("click", () => {
+      lesson = collectEditorData();
+      lesson.cards.push({
+        question: "",
+        hint: "",
+        answer: "",
+        image: ""
+      });
+      renderEditor();
+      setTimeout(() => {
+        const items = document.querySelectorAll(".editor-card");
+        items[items.length - 1]?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 50);
+    });
+
+    $("saveBtn").addEventListener("click", () => {
+      const updated = collectEditorData();
+      if (!updated.cards.length) {
+        toast("Hãy nhập ít nhất một câu hỏi.");
+        return;
+      }
+      lesson = updated;
+      if (!persistLesson()) return;
+      updateStartScreen();
+      toast("Đã lưu bài học.");
+    });
+
+    $("resetBtn").addEventListener("click", () => {
+      if (!confirm("Khôi phục nội dung mẫu ban đầu?")) return;
+      lesson = clone(defaultLesson);
+      persistLesson();
+      renderEditor();
+      updateStartScreen();
+      toast("Đã khôi phục bài mẫu.");
+    });
+
+    $("exportBtn").addEventListener("click", () => {
+      lesson = collectEditorData();
+      const blob = new Blob([JSON.stringify(lesson, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = "speaking-cards-lesson.json";
+      anchor.click();
+      URL.revokeObjectURL(url);
+      toast("Đã xuất nội dung bài học.");
+    });
+
+    $("importBtn").addEventListener("click", () => $("importFile").click());
+
+    $("importFile").addEventListener("change", async event => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      try {
+        const parsed = JSON.parse(await file.text());
+        if (!Array.isArray(parsed.cards) || parsed.cards.length === 0) {
+          throw new Error("Invalid JSON");
+        }
+        lesson = {
+          title: parsed.title || "Speaking Cards",
+          subtitle: parsed.subtitle || "Listen and answer in English.",
+          language: parsed.language || "en-US",
+          shuffle: parsed.shuffle !== false,
+          cards: parsed.cards.map(card => ({
+            question: String(card.question || ""),
+            hint: String(card.hint || ""),
+            answer: String(card.answer || ""),
+            image: String(card.image || "")
+          }))
+        };
+        persistLesson();
+        renderEditor();
+        updateStartScreen();
+        toast("Đã nhập bài học thành công.");
+      } catch (error) {
+        console.error(error);
+        toast("File JSON không đúng định dạng.");
+      } finally {
+        event.target.value = "";
+      }
+    });
+
+    window.addEventListener("beforeunload", () => {
+      if (mediaStream) mediaStream.getTracks().forEach(track => track.stop());
+      if (currentAudioUrl) URL.revokeObjectURL(currentAudioUrl);
+      if ("speechSynthesis" in window) speechSynthesis.cancel();
+    });
+
+    if ("speechSynthesis" in window) {
+      speechSynthesis.getVoices();
+    }
+
+    updateStartScreen();
+  </script>
+</body>
+</html>
